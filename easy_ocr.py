@@ -3,6 +3,7 @@ import cv2
 import numpy as np
 from easyocr.easyocr import Reader
 from PIL import Image, ImageDraw, ImageFont
+from tqdm import tqdm
 
 os.environ['CUDA_VISIBLE_DEVICES'] = '0,1'
 
@@ -36,7 +37,7 @@ if __name__ == '__main__':
 
     files, count = get_files('./workspace/demo_images')
 
-    for idx, file in enumerate(files):
+    for idx, file in tqdm(enumerate(files), total=count, desc="Processing Images"):
         filename = os.path.basename(file)
         result = reader.readtext(file)
         
@@ -52,7 +53,7 @@ if __name__ == '__main__':
         # result[1]: string
         # result[2]: confidence
         for (bbox, string, confidence) in result:
-            print("filename: '%s', confidence: %.4f, string: '%s'" % (filename, confidence, string))
+            # print("filename: '%s', confidence: %.4f, string: '%s'" % (filename, confidence, string))
 
             bbox = [tuple(point) for point in bbox]
             draw.polygon(bbox, outline=(0, 255, 0), width=2)
@@ -60,7 +61,7 @@ if __name__ == '__main__':
         
         image = cv2.cvtColor(np.array(image_pil), cv2.COLOR_RGB2BGR)
         
-        result_dir = 'workspace/result/easy_ocr'
+        result_dir = 'workspace/result/tqdm_test'
         os.makedirs(result_dir, exist_ok=True)
         
         result_path = os.path.join(result_dir, filename)

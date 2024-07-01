@@ -3,6 +3,7 @@ import cv2
 import numpy as np
 from paddleocr import PaddleOCR
 from PIL import Image, ImageDraw, ImageFont
+from tqdm import tqdm
 
 def get_files(path):
     file_list = []
@@ -26,7 +27,7 @@ if __name__ == '__main__':
     files, count = get_files('./workspace/demo_images')
     
     
-    for idx, img_file in enumerate(files):
+    for idx, img_file in tqdm(enumerate(files), total=count, desc="Processing Images"):
         plate_text = ''
         result = ocr.ocr(img_file, cls=True)
 
