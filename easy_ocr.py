@@ -22,13 +22,13 @@ def get_files(path):
 if __name__ == '__main__':
 
     # # Using default model
-    # reader = Reader(['ko'], gpu=True)
+    reader = Reader(['ko'], gpu=True)
 
-    # Using custom model
-    reader = Reader(['ko'], gpu=True,
-                    model_storage_directory='./workspace/user_network_dir',
-                    user_network_directory='./workspace/user_network_dir',
-                    recog_network='custom')
+    # # Using custom model
+    # reader = Reader(['ko'], gpu=True,
+    #                 model_storage_directory='./workspace/user_network_dir',
+    #                 user_network_directory='./workspace/user_network_dir',
+    #                 recog_network='custom')
     
     
     font_path = 'workspace/font/HYheadline_m-yoond1004.ttf'
@@ -60,7 +60,7 @@ if __name__ == '__main__':
         
         image = cv2.cvtColor(np.array(image_pil), cv2.COLOR_RGB2BGR)
         
-        result_dir = 'workspace/result_images'
+        result_dir = 'workspace/result/easy_ocr'
         os.makedirs(result_dir, exist_ok=True)
         
         result_path = os.path.join(result_dir, filename)
