@@ -1,5 +1,6 @@
 import os
 import cv2
+import json
 import numpy as np
 from easyocr.easyocr import Reader
 from PIL import Image, ImageDraw, ImageFont
@@ -19,26 +20,46 @@ def get_files(path):
 
     return file_list, len(file_list)
 
-
 if __name__ == '__main__':
 
-    # # Using default model
-    reader = Reader(['ko'], gpu=True)
-
-    # # Using custom model
-    # reader = Reader(['ko'], gpu=True,
-    #                 model_storage_directory='./workspace/user_network_dir',
-    #                 user_network_directory='./workspace/user_network_dir',
-    #                 recog_network='custom')
-    
-    
     font_path = 'workspace/font/HYheadline_m-yoond1004.ttf'
     font = ImageFont.truetype(font_path, 20)
+    
+    custom_model = False
+    result_dir = 'result/custom_easyocr'
+    dict_result_dir = 'result/dict'
+    os.makedirs(result_dir, exist_ok=True)
+    os.makedirs(dict_result_dir, exist_ok=True)
+    
+    
 
     files, count = get_files('./workspace/demo_images')
+    
+    positive_cnt = 0
+    negative_cnt = 0
+    
+    predict_dict = {
+        'positive': [],
+        'negative': [],
+    }
+    
+    if custom_model:
+        # Using custom model
+        reader = Reader(['ko'], gpu=True,
+                        model_storage_directory='./workspace/user_network_dir',
+                        user_network_directory='./workspace/user_network_dir',
+                        recog_network='custom')
+    else:
+        # Using default model
+        reader = Reader(['ko'], gpu=True)
+    
 
     for idx, file in tqdm(enumerate(files), total=count, desc="Processing Images"):
         filename = os.path.basename(file)
+        name = filename.split('.')[0]
+        if "-" in name:
+            name = name.split("-")[0]
+            # print(name)
         result = reader.readtext(file)
         
         image = cv2.imread(file)
@@ -46,7 +67,6 @@ if __name__ == '__main__':
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         image_pil = Image.fromarray(image)
         draw = ImageDraw.Draw(image_pil)
-
 
         # ./easyocr/utils.py 733 lines
         # result[0]: bbox
@@ -58,11 +78,44 @@ if __name__ == '__main__':
             bbox = [tuple(point) for point in bbox]
             draw.polygon(bbox, outline=(0, 255, 0), width=2)
             draw.text((bbox[0][0], bbox[0][1] - 25), string, font=font, fill=(0, 255, 0))
-        
+            
+            if " " in string:
+                string = string.replace(" " , "")
+            if "[" in string:
+                string = string.replace("[", "")
+            if "]" in string:    
+                string = string.replace("]", "")                
+                
+        if name == string:
+            positive_cnt += 1
+            # filename, confidence, string save to dict
+            predict_dict['positive'].append({
+                'filename': filename,
+                'confidence': confidence,
+                'string': string
+            })
+        else:
+            negative_cnt += 1
+            # filename, confidence, string save to dict
+            predict_dict['negative'].append({
+                'filename': filename,
+                'confidence': confidence,
+                'string': string
+            })
+            
         image = cv2.cvtColor(np.array(image_pil), cv2.COLOR_RGB2BGR)
-        
-        result_dir = 'workspace/result/tqdm_test'
-        os.makedirs(result_dir, exist_ok=True)
         
         result_path = os.path.join(result_dir, filename)
         cv2.imwrite(result_path, image)
+
+    print("Total: %d" % count)
+    print("Positive: %d, Negative: %d" % (positive_cnt, negative_cnt))
+    predict_dict['total'] = count
+    predict_dict['positive_cnt'] = positive_cnt
+    predict_dict['negative_cnt'] = negative_cnt
+    
+    with open(os.path.join(dict_result_dir, 'predict.json'), 'w', encoding="UTF-8") as f:
+        json.dump(predict_dict, f, ensure_ascii=False, indent=4)
+    
+    print("Done")
+        
