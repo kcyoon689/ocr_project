@@ -161,8 +161,7 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 
-workspace/demo_images
-workspace/font
-workspace/result
-result/*
-workspace/user_network_dir/*.pth
+workspace/*
+test_img/*
+results/*
+test_bash.sh
